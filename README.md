@@ -31,3 +31,11 @@ Amennyiben az AngularCLI (szükséges verziója) nincs telepítve, akkor a köve
 
 - Frontend futtatása
 > ng serve
+
+### Admin felhasználó belépési adatai:
+- email: "admin@example.com",
+- password: "admin123",
+
+### Pl. Mentor felhasználó belépési adatai:
+- email: "aa@mentor.com",
+- password: "asdasd",
