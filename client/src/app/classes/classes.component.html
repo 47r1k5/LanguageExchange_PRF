@@ -1,0 +1,57 @@
+<app-navbar></app-navbar>
+<div class="classes-container">
+  <h2>Available Classes</h2>
+
+  <form [formGroup]="filterForm" class="filter-form">
+  <mat-form-field>
+    <mat-label>Language to Learn</mat-label>
+    <mat-select formControlName="learnLanguage" multiple>
+        <mat-option
+    *ngFor="let lang of languagesList$ | async"
+    [value]="lang">
+    {{ lang }}
+  </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Language to Speak</mat-label>
+    <mat-select formControlName="speakLanguage" multiple><mat-option
+    *ngFor="let lang of languagesList$ | async"
+    [value]="lang">
+    {{ lang }}
+  </mat-option></mat-select>
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Level</mat-label>
+    <mat-select formControlName="level">
+        <mat-option *ngFor="let level of levelsList" [value]="level">{{ level }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+    <button mat-raised-button color="primary" type="button" (click)="filterForm.reset({language: filterForm.value.language, knownLanguage: filterForm.value.knownLanguage, level: ''})">
+      Reset Filters
+    </button>
+  </form>
+
+  <ng-container *ngIf="classes$ | async as classes">
+    <div *ngIf="classes.length > 0; else noClasses">
+      <div class="classes-list">
+        <mat-card *ngFor="let c of classes" class="class-card" [routerLink]="['/class', c._id]" style="cursor:pointer;">
+          <mat-card-title>{{ c.name }}</mat-card-title>
+          <mat-card-subtitle>
+            {{ c.learn_language }} • {{ c.level }} • {{ c.free_space }} spots left
+          </mat-card-subtitle>
+          <mat-card-content>
+            <p><strong>When:</strong> {{ c.startDate | date:'medium' }} – {{ c.endDate | date:'medium' }}</p>
+            <p><strong>Teacher:</strong> {{ c.teacherId.first_name }} {{ c.teacherId.last_name }}</p>
+            <p><strong>Location:</strong> {{ c.loc }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #noClasses>
+    <p>There are no classes yet in this category.</p>
+  </ng-template>
+</div>

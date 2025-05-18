@@ -1,0 +1,83 @@
+// src/styles/theme.scss
+
+@use '@angular/material' as mat;
+
+// 1) Include Material core (fonts, CSS reset, etc)
+@include mat.core();
+
+// 2) Paste in your prebuilt‐theme CSS variables
+html {
+  --mat-sys-background: #101414;
+  --mat-sys-error: #ffb4ab;
+  --mat-sys-error-container: #93000a;
+  --mat-sys-inverse-on-surface: #2d3131;
+  --mat-sys-inverse-primary: #006a6a;
+  --mat-sys-inverse-surface: #e0e3e2;
+  --mat-sys-on-background: #e0e3e2;
+  --mat-sys-on-error: #690005;
+  --mat-sys-on-error-container: #ffdad6;
+  --mat-sys-on-primary: #003737;
+  --mat-sys-on-primary-container: #00fbfb;
+  --mat-sys-on-primary-fixed: #002020;
+  --mat-sys-on-primary-fixed-variant: #004f4f;
+  --mat-sys-on-secondary: #1b3534;
+  --mat-sys-on-secondary-container: #cce8e7;
+  --mat-sys-on-secondary-fixed: #051f1f;
+  --mat-sys-on-secondary-fixed-variant: #324b4b;
+  --mat-sys-on-surface: #e0e3e2;
+  --mat-sys-on-surface-variant: #dae5e4;
+  --mat-sys-on-tertiary: #502400;
+  --mat-sys-on-tertiary-container: #ffdcc7;
+  --mat-sys-on-tertiary-fixed: #311300;
+  --mat-sys-on-tertiary-fixed-variant: #723600;
+  --mat-sys-outline: #889392;
+  --mat-sys-outline-variant: #3f4948;
+  --mat-sys-primary: #00dddd;
+  --mat-sys-primary-container: #004f4f;
+  --mat-sys-primary-fixed: #00fbfb;
+  --mat-sys-primary-fixed-dim: #00dddd;
+  --mat-sys-scrim: #000000;
+  --mat-sys-secondary: #b0cccb;
+  --mat-sys-secondary-container: #324b4b;
+  --mat-sys-secondary-fixed: #cce8e7;
+  --mat-sys-secondary-fixed-dim: #b0cccb;
+  --mat-sys-shadow: #000000;
+  --mat-sys-surface: #101414;
+  --mat-sys-surface-bright: #363a39;
+  --mat-sys-surface-container: #1c2020;
+  --mat-sys-surface-container-high: #272b2a;
+  --mat-sys-surface-container-highest: #313635;
+  --mat-sys-surface-container-low: #191c1c;
+  --mat-sys-surface-container-lowest: #0b0f0e;
+  --mat-sys-surface-dim: #101414;
+  --mat-sys-surface-tint: #00dddd;
+  --mat-sys-surface-variant: #3f4948;
+  --mat-sys-tertiary: #ffb787;
+  --mat-sys-tertiary-container: #723600;
+  --mat-sys-tertiary-fixed: #ffdcc7;
+  --mat-sys-tertiary-fixed-dim: #ffb787;
+
+  /* elevations */
+  --mat-sys-level0: 0px 0px 0px 0px rgba(0,0,0,0.2), 0px 0px 0px 0px rgba(0,0,0,0.14), 0px 0px 0px 0px rgba(0,0,0,0.12);
+  --mat-sys-level1: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  --mat-sys-level2: 0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12);
+  --mat-sys-level3: 0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12);
+  --mat-sys-level4: 0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12);
+  --mat-sys-level5: 0px 7px 8px -4px rgba(0,0,0,0.2), 0px 12px 17px 2px rgba(0,0,0,0.14), 0px 5px 22px 4px rgba(0,0,0,0.12);
+
+  /* typography, corners, etc. omitted for brevity… */
+}
+
+// 3) Make the whole page use your theme colors
+body {
+  margin: 0;
+  background-color: var(--mat-sys-background);
+  color: var(--mat-sys-on-background);
+  font-family: Roboto, sans-serif; // match Material
+}
+
+// 4) Optional helper mixin for elevation in your own components
+//    Usage: @include elevation(2);
+@mixin elevation($level) {
+  box-shadow: var(--mat-sys-level#{$level});
+}

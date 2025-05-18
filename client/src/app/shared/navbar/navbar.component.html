@@ -1,0 +1,28 @@
+<mat-toolbar color="primary">
+  <a routerLink="/" class="logo">LangEx</a>
+  <span class="spacer"></span>
+
+  <ng-container *ngIf="user$ | async as user; else guestLinks">
+    <ng-container *ngIf="isMentor$ | async; else studentLinks">
+      <button mat-button routerLink="/mentor/createClass">Create Class</button>
+      <button mat-button routerLink="/my-classes">My Classes</button>
+      <button mat-button routerLink="/profile">Profile</button>
+      <button mat-button (click)="logout()">Logout</button>
+    </ng-container>
+
+    <ng-template #studentLinks>
+      <button mat-button routerLink="/mentors">Mentors</button>
+      <button mat-button routerLink="/classes">Classes</button>
+      <button mat-button routerLink="/my-classes">My Classes</button>
+      <button mat-button routerLink="/profile">Profile</button>
+      <button mat-button (click)="logout()">Logout</button>
+    </ng-template>
+  </ng-container>
+
+  <ng-template #guestLinks>
+    <button mat-button routerLink="/mentors">Mentors</button>
+    <button mat-button routerLink="/classes">Classes</button>
+    <button mat-button routerLink="/login">Login</button>
+    <button mat-button routerLink="/signup">Register</button>
+  </ng-template>
+</mat-toolbar>

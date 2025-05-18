@@ -1,0 +1,35 @@
+<div class="login-container">
+  <form class="login-form" (ngSubmit)="login()">
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Email</mat-label>
+      <input matInput [(ngModel)]="email" name="email" type="email" required />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Password</mat-label>
+      <input matInput [(ngModel)]="password" name="password" type="password" required />
+    </mat-form-field>
+
+    <div class="buttons">
+      <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+        Login
+      </button>
+    </div>
+
+    <div class="buttons">
+      <button mat-button type="button" (click)="navigate('/signup')" [disabled]="isLoading">
+        Sign Up
+      </button>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <div class="overlay" *ngIf="isLoading">
+      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+    </div>
+
+  </form>
+</div>

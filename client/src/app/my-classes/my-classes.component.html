@@ -1,0 +1,39 @@
+<app-navbar></app-navbar>
+<div class="my-classes-container">
+  <h2 *ngIf="role$ | async as role">
+    {{ role === 'mentor' ? 'Classes You Teach' : 'My Classes' }}
+  </h2>
+
+  <ng-container *ngIf="myClasses$ | async as classes">
+    <ng-container *ngIf="classes.length > 0; else noClasses">
+      <div class="classes-list">
+        <mat-card
+          *ngFor="let c of classes"
+          class="class-card"
+          [routerLink]="['/class', c._id]"
+          style="cursor: pointer;"
+        >
+          <mat-card-title>{{ c.name }}</mat-card-title>
+          <mat-card-subtitle>
+            {{ c.learn_language }} • {{ c.level }} • {{ c.free_space }} spots left
+          </mat-card-subtitle>
+          <mat-card-content>
+            <p>{{ c.description }}</p>
+            <p>
+              <strong>When:</strong>
+              {{ c.startDate | date:'medium' }} – {{ c.endDate | date:'medium' }}
+            </p>
+            <p><strong>Location:</strong> {{ c.loc }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </ng-container>
+    <ng-template #noClasses>
+      <p>
+        You have not
+        {{ (role$ | async) === 'mentor' ? 'created' : 'enrolled in' }}
+        any classes yet.
+      </p>
+    </ng-template>
+  </ng-container>
+</div>

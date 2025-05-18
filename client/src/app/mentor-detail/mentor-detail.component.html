@@ -1,0 +1,37 @@
+<app-navbar></app-navbar>
+<div class="mentor-detail-container" *ngIf="mentor$ | async as m">
+  <mat-card>
+    <mat-card-title>{{ m.first_name }} {{ m.last_name }}</mat-card-title>
+    <mat-card-content>
+      <p><strong>Email:</strong> {{ m.email }}</p>
+      <p><strong>Bio:</strong> {{ m.bio }}</p>
+      <p><strong>Languages Known:</strong> {{ m.languages_known.join(', ') }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="mentor-classes">
+    <h3>Classes by {{ m.first_name }}</h3>
+
+    <!-- Use m.classes (an array) directly -->
+    <ng-container *ngIf="m.classes && m.classes.length; else noClasses">
+      <div class="class-cards">
+        <mat-card
+          *ngFor="let c of m.classes"
+          class="class-card"
+          [routerLink]="['/class', c._id]"
+          style="cursor: pointer;"
+        >
+          <mat-card-title>{{ c.name }}</mat-card-title>
+          <mat-card-subtitle>
+            {{ c.learn_language }} • {{ c.level }} •
+            {{ c.free_space }} spots
+          </mat-card-subtitle>
+        </mat-card>
+      </div>
+    </ng-container>
+
+    <ng-template #noClasses>
+      <p>No classes found for this mentor.</p>
+    </ng-template>
+  </div>
+</div>

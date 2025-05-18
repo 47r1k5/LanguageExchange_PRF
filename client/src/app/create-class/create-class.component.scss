@@ -1,0 +1,32 @@
+.create-class-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  height: 500px;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;            /* tighten row gaps to 1px */
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem auto;
+
+  /* Ensure each field stretches full width */
+  mat-form-field {
+    width: 100%;
+  }
+
+  .buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1px;         /* also tighten button gap */
+  }
+}
+
+  .buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }

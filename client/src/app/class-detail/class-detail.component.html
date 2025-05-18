@@ -1,0 +1,108 @@
+<app-navbar></app-navbar>
+<div class="class-detail-container" *ngIf="class$ | async as c">
+  <!-- Student View -->
+  <ng-container *ngIf="!(isTeacher$ | async)">
+    <mat-card>
+      <mat-card-title>{{ c.name }}</mat-card-title>
+      <mat-card-content>
+        <p><strong>Language taught:</strong> {{ c.learn_language }}</p>
+        <p><strong>Language used in class:</strong> {{ c.speak_language }}</p>
+        <p><strong>Level:</strong> {{ c.level }}</p>
+        <p>
+          <strong>Teacher:</strong>
+          <a [routerLink]="['/mentor', c.teacherId._id]">
+            {{ c.teacherId.first_name }} {{ c.teacherId.last_name }}
+          </a>
+        </p>
+        <p><strong>Description:</strong> {{ c.description }}</p>
+        <p><strong>Spots left:</strong> {{ c.free_space }}</p>
+        <p>
+          <strong>Schedule:</strong>
+          {{ c.startDate | date : "medium" }} –
+          {{ c.endDate | date : "medium" }}
+        </p>
+        <p><strong>Location:</strong> {{ c.loc }}</p>
+
+        <!-- Enrollment Controls -->
+        <ng-container *ngIf="currentUser$ | async; else loginPrompt">
+          <button
+            mat-raised-button
+            color="primary"
+            *ngIf="!(isEnrolled$ | async)"
+            [disabled]="!(canEnroll$ | async)"
+            (click)="onEnroll()"
+          >
+            Enroll
+          </button>
+          <button
+            mat-raised-button
+            color="warn"
+            *ngIf="isEnrolled$ | async"
+            (click)="onLeave()"
+          >
+            Leave
+          </button>
+          <p *ngIf="!(canEnroll$ | async)">
+            You do not meet the language requirements to enroll.
+          </p>
+          <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        </ng-container>
+        <ng-template #loginPrompt>
+          <p>Please <a routerLink="/login">log in</a> to enroll.</p>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+
+  <!-- Teacher View -->
+  <ng-container *ngIf="isTeacher$ | async">
+    <h2>{{ c.name }} — Enrolled Students</h2>
+    <p><strong>Language taught:</strong> {{ c.learn_language }}</p>
+    <p><strong>Language used in class:</strong> {{ c.speak_language }}</p>
+    <p><strong>Level:</strong> {{ c.level }}</p>
+    <p><strong>Spots left:</strong> {{ c.free_space }}</p>
+    <p>
+      <strong>Schedule:</strong> {{ c.startDate | date : "medium" }} –
+      {{ c.endDate | date : "medium" }}
+    </p>
+    <p><strong>Location:</strong> {{ c.loc }}</p>
+    <div class="mentor-controls">
+      <button mat-raised-button color="primary" (click)="onUpdate()">
+        Update
+      </button>
+      <button mat-raised-button color="warn" (click)="onDelete()">
+        Delete
+      </button>
+    </div>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <table mat-table [dataSource]="c.studentsIds" class="mat-elevation-z8">
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let s">
+          {{ s.first_name }} {{ s.last_name }}
+        </td>
+      </ng-container>
+
+      <!-- Email Column -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let s">{{ s.email }}</td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let s">
+          <button mat-button color="warn" (click)="kickStudent(c._id, s._id)">
+            Kick
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </ng-container>
+</div>

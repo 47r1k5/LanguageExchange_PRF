@@ -1,0 +1,17 @@
+<app-navbar></app-navbar>
+<div class="profile-container">
+  <mat-card *ngIf="user$ | async as user">
+    <mat-card-title>Profile</mat-card-title>
+    <mat-card-content>
+      <p><strong>Email:</strong> {{ user.email }}</p>
+      <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+      <p><strong>Languages Known:</strong> {{ user.languages_known.join(', ') }}</p>
+      <p><strong>Languages Learning:</strong> {{ user.languages_learning.join(', ') }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="onUpdate()">
+        Update Profile
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

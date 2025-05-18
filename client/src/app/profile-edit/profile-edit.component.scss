@@ -1,0 +1,28 @@
+.edit-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.edit-form {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    width: 80%;
+    max-width: 400px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    gap: 1px;
+    .buttons {
+        display: flex;
+        justify-content: center;
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+}
+

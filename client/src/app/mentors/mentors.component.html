@@ -1,0 +1,28 @@
+<app-navbar></app-navbar>
+<div class="mentors-container">
+  <h2>Mentors</h2>
+  <form [formGroup]="filterForm" class="filter-form">
+    <mat-form-field appearance="fill">
+      <mat-label>Filter by Known Language</mat-label>
+      <mat-select formControlName="languages" multiple>
+        <mat-option *ngFor="let lang of languagesList$ | async" [value]="lang">{{ lang }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </form>
+
+  <ng-container *ngIf="mentors$ | async as mentors">
+    <ng-container *ngIf="mentors.length > 0; else noMentors">
+      <div class="mentors-list">
+        <mat-card *ngFor="let m of mentors" class="mentor-card" [routerLink]="['/mentor', m._id]" style="cursor: pointer;">
+          <mat-card-title>{{ m.first_name }} {{ m.last_name }}</mat-card-title>
+          <mat-card-content>
+            <p><strong>Languages Known:</strong> {{ m.languages_known.join(', ') }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </ng-container>
+  </ng-container>
+  <ng-template #noMentors>
+    <p>There are no mentors in this category.</p>
+  </ng-template>
+</div>

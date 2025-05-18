@@ -1,0 +1,78 @@
+<div class="login-container"><form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="login-form">
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Email</mat-label>
+    <input matInput formControlName="email" placeholder="Email" />
+    <mat-error *ngIf="signupForm.get('email')?.hasError('required')">Email is required.</mat-error>
+    <mat-error *ngIf="signupForm.get('email')?.hasError('email')">Enter a valid email.</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>First Name</mat-label>
+    <input matInput formControlName="first_name" placeholder="First Name" />
+    <mat-error *ngIf="signupForm.get('first_name')?.hasError('required')">First Name is required.</mat-error>
+    <mat-error *ngIf="signupForm.get('first_name')?.hasError('minlength')">Minimum 2 characters.</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Last Name</mat-label>
+    <input matInput formControlName="last_name" placeholder="Last Name" />
+    <mat-error *ngIf="signupForm.get('last_name')?.hasError('required')">Last Name is required.</mat-error>
+    <mat-error *ngIf="signupForm.get('last_name')?.hasError('minlength')">Minimum 2 characters.</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Languages You Speak</mat-label>
+    <mat-select formControlName="languages_known" multiple>
+      <mat-option *ngFor="let lang of languagesList$ | async" [value]="lang">
+        {{ lang }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="signupForm.get('languages_known')?.hasError('required')">
+      Select at least one language.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Languages You Learning</mat-label>
+    <mat-select formControlName="languages_learning" multiple>
+      <mat-option *ngFor="let lang of languagesList$ | async" [value]="lang">
+        {{ lang }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="signupForm.get('languages_learning')?.hasError('required')">
+      Select at least one language.
+    </mat-error>
+    <mat-error *ngIf="signupForm.hasError('duplicateLanguage')">
+      A language cannot be both known and learning.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Password</mat-label>
+    <input matInput formControlName="password" type="password" placeholder="Password" />
+    <mat-error *ngIf="signupForm.get('password')?.hasError('required')">Password is required.</mat-error>
+    <mat-error *ngIf="signupForm.get('password')?.hasError('minlength')">Min 6 characters.</mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Confirm Password</mat-label>
+    <input matInput formControlName="confirmPassword" type="password" placeholder="Confirm Password" />
+    <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('required')">Confirmation required.</mat-error>
+    <mat-error *ngIf="signupForm.get('confirmPassword')?.hasError('mustMatch')">Passwords must match.</mat-error>
+  </mat-form-field>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <!-- Buttons -->
+  <div class="buttons">
+    <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+      <span *ngIf="!isLoading">Sign Up</span>
+      <mat-progress-spinner *ngIf="isLoading" diameter="24" mode="indeterminate"></mat-progress-spinner>
+    </button>
+    <button mat-button type="button" (click)="goBack()" [disabled]="isLoading">Back</button>
+  </div>
+</form>
+
+</div>
