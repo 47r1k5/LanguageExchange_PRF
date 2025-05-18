@@ -1,0 +1,84 @@
+<!-- src/app/class-management/class-management.component.html -->
+<app-navbar></app-navbar>
+
+<div class="class-management-container">
+  <h2>Class Management</h2>
+
+  <ng-container *ngIf="classes$ | async as classes">
+    <table mat-table [dataSource]="classes || []" class="mat-elevation-z8">
+
+      <!-- Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let c">{{ c.name }}</td>
+      </ng-container>
+
+      <!-- Learn Language -->
+      <ng-container matColumnDef="learn_language">
+        <th mat-header-cell *matHeaderCellDef>Teaching</th>
+        <td mat-cell *matCellDef="let c">{{ c.learn_language }}</td>
+      </ng-container>
+
+      <!-- Speak Language -->
+      <ng-container matColumnDef="speak_language">
+        <th mat-header-cell *matHeaderCellDef>Class Language</th>
+        <td mat-cell *matCellDef="let c">{{ c.speak_language }}</td>
+      </ng-container>
+
+      <!-- Level -->
+      <ng-container matColumnDef="level">
+        <th mat-header-cell *matHeaderCellDef>Level</th>
+        <td mat-cell *matCellDef="let c">{{ c.level }}</td>
+      </ng-container>
+
+      <!-- Spots -->
+      <ng-container matColumnDef="free_space">
+        <th mat-header-cell *matHeaderCellDef>Spots Left</th>
+        <td mat-cell *matCellDef="let c">{{ c.free_space }}</td>
+      </ng-container>
+
+      <!-- Start Date -->
+      <ng-container matColumnDef="startDate">
+        <th mat-header-cell *matHeaderCellDef>Start</th>
+        <td mat-cell *matCellDef="let c">{{ c.startDate | date:'short' }}</td>
+      </ng-container>
+
+      <!-- End Date -->
+      <ng-container matColumnDef="endDate">
+        <th mat-header-cell *matHeaderCellDef>End</th>
+        <td mat-cell *matCellDef="let c">{{ c.endDate | date:'short' }}</td>
+      </ng-container>
+
+      <!-- Location -->
+      <ng-container matColumnDef="loc">
+        <th mat-header-cell *matHeaderCellDef>Location</th>
+        <td mat-cell *matCellDef="let c">{{ c.loc }}</td>
+      </ng-container>
+
+      <!-- Teacher -->
+      <ng-container matColumnDef="teacher">
+        <th mat-header-cell *matHeaderCellDef>Teacher</th>
+        <td mat-cell *matCellDef="let c">
+          {{ c.teacherId.first_name }} {{ c.teacherId.last_name }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let c">
+          <button
+            mat-button
+            color="warn"
+            (click)="deleteClass(c._id)"
+          >
+            Delete
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row        *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </ng-container>
+</div>

@@ -4,7 +4,7 @@ import { User, IUser } from "../model/User";
 import { Class } from "../model/Class";
 import { logger } from "../middleware/logger";
 import { ELogType } from "../enums/ELogType";
-import { Language } from "../model/Languages";
+import { Language } from "../model/Language";
 import { ERole } from "../enums/ERole";
 
 export const configureRoutes = (

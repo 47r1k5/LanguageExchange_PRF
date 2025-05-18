@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './shared/guards/auth.guard';
 import { mentorGuard } from './shared/guards/mentor.guard';
+import { adminGuard } from './shared/guards/admin.guard';
 
 export const routes: Routes = [
     { path: '', loadComponent: () => import('./home/home.component').then((c) => c.HomeComponent) },
@@ -15,6 +16,11 @@ export const routes: Routes = [
     {path: 'profile/edit', loadComponent: () => import('./profile-edit/profile-edit.component').then((c) => c.ProfileEditComponent), canActivate: [authGuard]},
     {path: 'my-classes', loadComponent: () => import('./my-classes/my-classes.component').then((c) => c.MyClassesComponent), canActivate: [authGuard]},
     {path: 'mentor/updateClass/:id', loadComponent: () => import('./update-class/update-class.component').then((c) => c.UpdateClassComponent), canActivate: [mentorGuard]},
+    {path: 'admin/userManagement', loadComponent: () => import('./user-management/user-management.component').then((c) => c.UserManagementComponent), canActivate: [adminGuard]},
+    {path: 'admin/mentorManagement', loadComponent: () => import('./mentor-management/mentor-management.component').then((c) => c.MentorManagementComponent), canActivate: [adminGuard]},
+    {path: 'admin/classManagement', loadComponent: () => import('./class-management/class-management.component').then((c) => c.ClassManagementComponent), canActivate: [adminGuard]},
+    {path: 'admin/languageManagement', loadComponent: () => import('./language-management/language-management.component').then((c) => c.LanguageManagementComponent), canActivate: [adminGuard]},
+    {path: 'admin/logManagement', loadComponent: () => import('./log-management/log-management.component').then((c) => c.LogManagementComponent), canActivate: [adminGuard]},
     { path: '**', redirectTo: 'login' }
 ];
 

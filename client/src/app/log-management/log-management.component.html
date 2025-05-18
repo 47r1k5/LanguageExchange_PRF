@@ -1,0 +1,28 @@
+<app-navbar></app-navbar>
+
+<div class="log-management-container">
+  <h2>Log Management</h2>
+
+  <ng-container *ngIf="logs$ | async as logs">
+    <table mat-table [dataSource]="logs || []" class="mat-elevation-z8">
+
+      <ng-container matColumnDef="timestamp">
+        <th mat-header-cell *matHeaderCellDef>Timestamp</th>
+        <td mat-cell *matCellDef="let l">{{ l.timestamp | date:'medium' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="level">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let l">{{ l.type }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="message">
+        <th mat-header-cell *matHeaderCellDef>Message</th>
+        <td mat-cell *matCellDef="let l">{{ l.message }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </ng-container>
+</div>

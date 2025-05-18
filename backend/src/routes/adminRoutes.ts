@@ -7,96 +7,72 @@ import { ELogType } from "../enums/ELogType";
 import { logger } from "../middleware/logger";
 import { isAdmin, isMentor } from "../middleware/autorization";
 import { Class } from "../model/Class";
-import { Language } from "../model/Languages";
+import { Language } from "../model/Language";
 
 export const configureAdminRoutes = (
   passport: PassportStatic,
   router: Router
 ): Router => {
-  router.get(
-    "/getAllUsers",
-    isAdmin,
-    isMentor,
-    (req: Request, res: Response) => {
-      const user = req.user as IUser;
-      User.find({ role: ERole.USER })
-        .then((users) => {
-          if (!users) {
-            res.status(404).send("No users found.");
-          } else {
-            res.status(200).send(users);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          res.status(500).send(error);
-        });
-    }
-  );
+  router.get("/users", isAdmin, (req: Request, res: Response) => {
+    User.find({ role: "user" })
+      .then((users) => {
+        res.status(200).json(users);
+      })
+      .catch((error) => {
+        logger(ELogType.ERROR, `Error fetching users on admin: ${error}`);
+        res.status(500).send(error);
+      });
+  });
 
+  router.get("/mentors", isAdmin, (req: Request, res: Response) => {
+    User.find({ role: "mentor" })
+      .then((mentors) => {
+        res.status(200).json(mentors);
+      })
+      .catch((error) => {
+        logger(ELogType.ERROR, `Error fetching mentors on admin: ${error}`);
+        res.status(500).send(error);
+      });
+  });
 
+  router.get("/classes", isAdmin, (req: Request, res: Response) => {
+    Class.find().populate("teacherId","first_name last_name")
+      .then((classes) => {
+        res.status(200).json(classes);
+      })
+      .catch((error) => {
+        logger(ELogType.ERROR, `Error fetching classes on admin: ${error}`);
+        res.status(500).send(error);
+      });
+  });
 
-  router.get(
-    "/getUsersByKnownLanguage",
-    isAdmin,
-    isMentor,
-    (req: Request, res: Response) => {
-      if (req.isAuthenticated()) {
-        const user = req.user as IUser;
-        if (user.role === "admin") {
-          const language = req.body.language as string;
-          User.find({ role: ERole.USER })
-            .then((users) => {
-              if (!users) {
-                res.status(404).send("No users found.");
-              } else {
-                const filteredUsers = users.filter((u) =>
-                  u.languages_known?.includes(language)
-                );
-                res.status(200).send(filteredUsers);
-              }
-            })
-            .catch((error) => {
-              console.log(error);
-              res.status(500).send(error);
-            });
-        } else {
-          res.status(403).send("User is not authorized.");
-        }
-      }
-    }
-  );
-
-  router.get(
-    "/getUsersByLearningLanguage",
-    isAdmin,
-    isMentor,
-    (req: Request, res: Response) => {
-      if (req.isAuthenticated()) {
-        const user = req.user as IUser;
-        if (user.role === "admin") {
-          const language = req.body.language as string;
-          User.find({ role: ERole.USER, language_learning: language })
-            .then((users) => {
-              if (!users) {
-                res.status(404).send("No users found.");
-              } else {
-                res.status(200).send(users);
-              }
-            })
-            .catch((error) => {
-              res.status(500).send(error);
-            });
-        } else {
-          res.status(403).send("User is not authorized.");
-        }
-      }
-    }
-  );
-
-  router.post("/deleteUser", isAdmin, (req: Request, res: Response) => {
+  router.delete("class/:id", isAdmin, (req: Request, res: Response) => {
+    const classId = req.params.id;
     const user = req.user as IUser;
-    const userId = req.body.userId;
+    Class.findByIdAndDelete(classId)
+      .then((deletedClass) => {
+        if (!deletedClass) {
+          logger(
+            ELogType.WARNING,
+            `Admin ${user.email} attempted to delete non-existing class ${classId}.`
+          );
+          res.status(404).send("Class not found.");
+        } else {
+          res.status(200).send("Class deleted successfully.");
+        }
+      })
+      .catch((error) => {
+        logger(
+          ELogType.ERROR,
+          `Error deleting class ${classId} by ${user.email}: ${error}`
+        );
+        res.status(500).send(error);
+      });
+  });
+
+  router.delete("/users/:id", isAdmin, (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const user = req.user as IUser;
     User.findByIdAndDelete(userId)
       .then((deletedUser) => {
         if (!deletedUser) {
@@ -106,13 +82,51 @@ export const configureAdminRoutes = (
           );
           res.status(404).send("User not found.");
         } else {
-            res.status(200).send("User deleted successfully.");
+          if (deletedUser.role === "mentor") {
+            Class.deleteMany({ teacherId: userId }).catch((error) => {
+              logger(
+                ELogType.ERROR,
+                `Error deleting class user ${userId}: ${error}`
+              );
+              res.status(500).send(error);
+            });
+          }else{
+            Class.updateMany({studentsIds:userId},
+              { $pull: { studentsIds: userId }, $inc: { free_space: 1 } },
+              { new: true }
+            )
+          }
+          res.status(200).send("User deleted successfully.");
         }
       })
       .catch((error) => {
         logger(
           ELogType.ERROR,
           `Error deleting user ${userId} by ${user.email}: ${error}`
+        );
+        res.status(500).send(error);
+      });
+  });
+
+  router.delete("/languages/:lang",isAdmin, (req: Request, res: Response) => {
+    const lang = req.params.lang;
+    const user = req.user as IUser;
+    Language.deleteOne({name:lang})
+      .then((deletedClass) => {
+        if (!deletedClass) {
+          logger(
+            ELogType.WARNING,
+            `Admin ${user.email} attempted to delete non-existing language ${lang}.`
+          );
+          res.status(404).send("Lang not found.");
+        } else {
+          res.status(200).send("Lang deleted successfully.");
+        }
+      })
+      .catch((error) => {
+        logger(
+          ELogType.ERROR,
+          `Error deleting ${lang} language by ${user.email}: ${error}`
         );
         res.status(500).send(error);
       });
@@ -130,25 +144,11 @@ export const configureAdminRoutes = (
       });
   });
 
-  router.get("/getRecentLogs", isAdmin, (req: Request, res: Response) => {
+  router.get("/logs", isAdmin, (req: Request, res: Response) => {
     const user = req.user as IUser;
 
     Log.find()
       .sort({ createdAt: -1 })
-      .limit(10)
-      .then((logs) => {
-        res.status(200).send(logs);
-      })
-      .catch((error) => {
-        console.log(error);
-        res.status(500).send(error);
-      });
-  });
-
-  router.get("/getLogsByType", (req: Request, res: Response) => {
-    const user = req.user as IUser;
-    const logType = req.body.type as string;
-    Log.find({ type: logType })
       .then((logs) => {
         res.status(200).send(logs);
       })
@@ -168,6 +168,7 @@ export const configureAdminRoutes = (
       email,
       password,
       languages_known,
+      languages_learning:[],
       bio,
       role: ERole.MENTOR,
     });
@@ -190,89 +191,12 @@ export const configureAdminRoutes = (
       });
   });
 
-  router.post("/deleteMentor", isAdmin, (req: Request, res: Response) => {
-    const user = req.user as IUser;
-    const mentorId = req.body.mentorId;
-    User.findByIdAndDelete(mentorId)
-      .then((deletedMentor) => {
-        if (!deletedMentor) {
-          logger(
-            ELogType.WARNING,
-            `Admin ${user.email} attempted to delete non-existing mentor ${mentorId}.`
-          );
-          res.status(404).send("Mentor not found.");
-        } else {
-          Class.find({ mentor: mentorId })
-            .then((classes) => {
-              classes.forEach((classItem) => {
-                classItem.studentsIds.forEach((studentId) => {
-                  User.findByIdAndUpdate(studentId, {
-                    $pull: { classes: classItem._id },
-                  })
-                    .then((updatedUser) => {
-                      if (!updatedUser) {
-                        logger(
-                          ELogType.WARNING,
-                          `Admin ${user.email} attempted to update non-existing user ${studentId}.`
-                        );
-                      } else {
-                        logger(
-                          ELogType.INFO,
-                          `Admin ${user.email} removed class ${classItem._id} from user ${studentId}.`
-                        );
-                      }
-                    })
-                    .catch((error) => {
-                      console.log(error);
-                      logger(
-                        ELogType.ERROR,
-                        `Error updating user ${studentId} by ${user.email}: ${error}`
-                      );
-                    });
-                });
-                Class.findByIdAndDelete(classItem._id).then((deletedClass) => {
-                  if (!deletedClass) {
-                    logger(
-                      ELogType.WARNING,
-                      `Admin ${user.email} attempted to delete non-existing class ${classItem._id}.`
-                    );
-                  } else {
-                    logger(
-                      ELogType.INFO,
-                      `Admin ${user.email} deleted class ${classItem._id} by deleting mentor ${mentorId}.`
-                    );
-                  }
-                });
-              });
-            })
-            .catch((error) => {
-              console.log(error);
-              logger(
-                ELogType.ERROR,
-                `Error deleting classes by ${user.email}: ${error}`
-              );
-            });
-          logger(
-            ELogType.INFO,
-            `Admin ${user.email} deleted mentor ${mentorId}.`
-          );
-          res.status(200).send("Mentor deleted successfully.");
-        }
-      })
-      .catch((error) => {
-        logger(
-          ELogType.ERROR,
-          `Error deleting mentor ${mentorId} by ${user.email}: ${error}`
-        );
-        res.status(500).send(error);
-      });
-  });
-
   router.post("/addLanguage", isAdmin, (req: Request, res: Response) => {
     const user = req.user as IUser;
     const language = req.body.language as string;
-    let lang = new Language({name:language});
-    lang.save()
+    let lang = new Language({ name: language });
+    lang
+      .save()
       .then((savedLanguage) => {
         logger(
           ELogType.INFO,
@@ -287,57 +211,6 @@ export const configureAdminRoutes = (
           `Error creating language by ${user.email}: ${error}`
         );
         res.status(500).send("Internal server error.");
-      });
-  });
-
-  router.post("/deleteLanguage", isAdmin, (req: Request, res: Response) => {
-    const user = req.user as IUser;
-    const language = req.body.language as string;
-    Language.deleteOne({name: language})
-      .then((deletedLanguage) => {
-        if (!deletedLanguage) {
-          logger(
-            ELogType.WARNING,
-            `Admin ${user.email} attempted to delete non-existing language ${language}.`
-          );
-          res.status(404).send("Language not found.");
-        } else {
-          logger(
-            ELogType.INFO,
-            `Admin ${user.email} deleted language ${language}.`
-          );
-          res.status(200).send("Language deleted successfully.");
-        }
-      })
-      .catch((error) => {
-        logger(
-          ELogType.ERROR,
-          `Error deleting language ${language} by ${user.email}: ${error}`
-        );
-        res.status(500).send(error);})
-  });
-
-  router.get("/getClassByTeacherId", isAdmin, (req: Request, res: Response) => {
-    const user = req.user as IUser;
-    const teacherId = req.body.teacherId;
-    Class.find({ teacherId: teacherId })
-      .then((classes) => {
-        if (!classes) {
-          res.status(404).send("No classes found.");
-        } else {
-          logger(
-            ELogType.INFO,
-            `Admin ${user.email} requested classes by teacher ${teacherId}.`
-          );
-          res.status(200).send(classes);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-        logger(
-          ELogType.ERROR,
-          `Error getting classes by teacher ${teacherId} by ${user.email}: ${error}`
-        );
       });
   });
 

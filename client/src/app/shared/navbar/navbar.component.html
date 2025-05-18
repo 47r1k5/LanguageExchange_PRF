@@ -2,21 +2,36 @@
   <a routerLink="/" class="logo">LangEx</a>
   <span class="spacer"></span>
 
-  <ng-container *ngIf="user$ | async as user; else guestLinks">
-    <ng-container *ngIf="isMentor$ | async; else studentLinks">
-      <button mat-button routerLink="/mentor/createClass">Create Class</button>
-      <button mat-button routerLink="/my-classes">My Classes</button>
-      <button mat-button routerLink="/profile">Profile</button>
-      <button mat-button (click)="logout()">Logout</button>
-    </ng-container>
+  <ng-container *ngIf="user$ | async; else guestLinks">
+    <ng-container *ngIf="role$ | async as role">
+      <ng-container [ngSwitch]="role">
 
-    <ng-template #studentLinks>
-      <button mat-button routerLink="/mentors">Mentors</button>
-      <button mat-button routerLink="/classes">Classes</button>
-      <button mat-button routerLink="/my-classes">My Classes</button>
-      <button mat-button routerLink="/profile">Profile</button>
-      <button mat-button (click)="logout()">Logout</button>
-    </ng-template>
+        <ng-container *ngSwitchCase="'admin'">
+          <button mat-button routerLink="/admin/userManagement">Users</button>
+          <button mat-button routerLink="/admin/mentorManagement">Mentors</button>
+          <button mat-button routerLink="/admin/classManagement">Classes</button>
+          <button mat-button routerLink="/admin/languageManagement">Languages</button>
+          <button mat-button routerLink="/admin/logManagement">Logs</button>
+          <button mat-button (click)="logout()">Logout</button>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'mentor'">
+          <button mat-button routerLink="/mentor/createClass">Create Class</button>
+          <button mat-button routerLink="/my-classes">My Classes</button>
+          <button mat-button routerLink="/profile">Profile</button>
+          <button mat-button (click)="logout()">Logout</button>
+        </ng-container>
+
+        <ng-container *ngSwitchDefault>
+          <button mat-button routerLink="/mentors">Mentors</button>
+          <button mat-button routerLink="/classes">Classes</button>
+          <button mat-button routerLink="/my-classes">My Classes</button>
+          <button mat-button routerLink="/profile">Profile</button>
+          <button mat-button (click)="logout()">Logout</button>
+        </ng-container>
+
+      </ng-container>
+    </ng-container>
   </ng-container>
 
   <ng-template #guestLinks>

@@ -16,11 +16,11 @@ import { User } from '../model/User';
 })
 export class NavbarComponent {
   user$: Observable<User|null>;
-  isMentor$: Observable<boolean>;
+  role$!: Observable<string | null>;
 
   constructor(private auth: AuthService, private router: Router) {
-    this.user$     = this.auth.currentUser$;
-    this.isMentor$ = this.auth.checkRole().pipe(map(role => role === 'mentor'));
+    this.user$ = this.auth.currentUser$;
+    this.role$ = this.auth.checkRole();
   }
 
   logout() {

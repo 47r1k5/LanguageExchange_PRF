@@ -4,6 +4,7 @@ import { User } from '../model/User';
 import { BehaviorSubject, catchError, Observable, of, tap } from 'rxjs';
 import { Class } from '../model/Class';
 import { Mentor } from '../model/Mentor';
+import { Log } from '../model/Log';
 
 @Injectable({
   providedIn: 'root',
@@ -44,6 +45,69 @@ export class AuthService {
       .pipe(tap((user) => this.currentUserSubject.next(user)));
   }
 
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>('http://localhost:5000/admin/users', {
+      withCredentials: true,
+    });
+  }
+
+  createLanguage(language: string): Observable<void> {
+    return this.http.post<void>(
+      'http://localhost:5000/admin/addLanguage',
+      { language },
+      { withCredentials: true }
+    );
+  }
+
+  deleteUser(id: string): Observable<any> {
+    return this.http.delete(`http://localhost:5000/admin/users/${id}`, {
+      withCredentials: true,
+    });
+  }
+
+  getAllMentors(): Observable<User[]> {
+    return this.http.get<User[]>('http://localhost:5000/admin/mentors', {
+      withCredentials: true,
+    });
+  }
+
+  getAllClasses(): Observable<Class[]> {
+    return this.http.get<Class[]>('http://localhost:5000/admin/classes', {
+      withCredentials: true,
+    });
+  }
+
+  delClass(id: string): Observable<void> {
+    return this.http.delete<void>(`http://localhost:5000/admin/class/${id}`, {
+      withCredentials: true,
+    });
+  }
+
+  deleteMentor(id: string): Observable<any> {
+    return this.deleteUser(id);
+  }
+
+  deleteLanguage(lang: string): Observable<void> {
+    return this.http.delete<void>(
+      `http://localhost:5000/admin/languages/${lang}`,
+      { withCredentials: true }
+    );
+  }
+
+  getLogs(): Observable<Log[]> {
+    return this.http.get<Log[]>('http://localhost:5000/admin/logs', {
+      withCredentials: true,
+    });
+  }
+
+  createMentor(payload: any): Observable<Mentor> {
+    return this.http.post<Mentor>(
+      'http://localhost:5000/admin/createMentor',
+      payload,
+      { withCredentials: true }
+    );
+  }
+
   register(user: User) {
     const body = {
       email: user.email,
@@ -80,8 +144,8 @@ export class AuthService {
 
   checkRole() {
     return this.http.get<string>('http://localhost:5000/checkRole', {
-      withCredentials: true
-    })
+      withCredentials: true,
+    });
   }
 
   getProfile() {
@@ -139,10 +203,19 @@ export class AuthService {
       { withCredentials: true }
     );
   }
-  
+
   getMentorClasses(id: string): Observable<Class[]> {
-    return this.http.get<Class[]>(`http://localhost:5000/mentor/${id}/classes`, { withCredentials: true }).pipe(tap((classes) => {
-      classes.forEach((c) => {console.log(c)});}))
+    return this.http
+      .get<Class[]>(`http://localhost:5000/mentor/${id}/classes`, {
+        withCredentials: true,
+      })
+      .pipe(
+        tap((classes) => {
+          classes.forEach((c) => {
+            console.log(c);
+          });
+        })
+      );
   }
 
   getMyClasses(): Observable<Class[]> {
@@ -169,19 +242,19 @@ export class AuthService {
   }
 
   kickStudent(classId: string, studentId: string): Observable<Class> {
-  return this.http.post<Class>(
-    `http://localhost:5000/mentor/class/${classId}/kick/${studentId}`,
-    {},
-    { withCredentials: true }
-  );
-}
+    return this.http.post<Class>(
+      `http://localhost:5000/mentor/class/${classId}/kick/${studentId}`,
+      {},
+      { withCredentials: true }
+    );
+  }
 
   getClassById(id: string): Observable<Class> {
     return this.http.get<Class>(`http://localhost:5000/class/${id}`);
   }
 
   createClass(payload: any): Observable<Class> {
-    const body ={
+    const body = {
       name: payload.name,
       description: payload.description,
       speak_language: payload.speak_language,
@@ -192,7 +265,7 @@ export class AuthService {
       loc: payload.loc,
       level: payload.level,
       studentsIds: [],
-    }
+    };
     return this.http.post<Class>(
       `http://localhost:5000/mentor/createClass`,
       body,
@@ -201,16 +274,20 @@ export class AuthService {
   }
 
   deleteClass(id: string): Observable<string> {
-    return this.http.post<string>(`http://localhost:5000/mentor/deleteClass/${id}`, {}, {
-      withCredentials: true,
-    });
+    return this.http.post<string>(
+      `http://localhost:5000/mentor/deleteClass/${id}`,
+      {},
+      {
+        withCredentials: true,
+      }
+    );
   }
 
   updateClass(classId: string, payload: Partial<Class>): Observable<Class> {
-  return this.http.put<Class>(
-    `http://localhost:5000/mentor/updateClass/${classId}`,
-    payload,
-    { withCredentials: true }
-  );
-}
+    return this.http.put<Class>(
+      `http://localhost:5000/mentor/updateClass/${classId}`,
+      payload,
+      { withCredentials: true }
+    );
+  }
 }

@@ -1,0 +1,112 @@
+<!-- src/app/mentor-management/mentor-management.component.html -->
+<app-navbar></app-navbar>
+
+<div class="mentor-management-container">
+  <h2>Mentor Management</h2>
+
+      <!-- Create Mentor Form -->
+  <form [formGroup]="createForm" (ngSubmit)="onCreate()" class="create-form">
+    <mat-form-field appearance="fill">
+      <mat-label>First Name</mat-label>
+      <input matInput formControlName="first_name" />
+      <mat-error *ngIf="createForm.get('first_name')?.hasError('required')">
+        Required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Last Name</mat-label>
+      <input matInput formControlName="last_name" />
+      <mat-error *ngIf="createForm.get('last_name')?.hasError('required')">
+        Required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" />
+      <mat-error *ngIf="createForm.get('email')?.hasError('required')">
+        Required
+      </mat-error>
+      <mat-error *ngIf="createForm.get('email')?.hasError('email')">
+        Not a valid email
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" />
+      <mat-error *ngIf="createForm.get('password')?.hasError('required')">
+        Required
+      </mat-error>
+      <mat-error *ngIf="createForm.get('password')?.hasError('minlength')">
+        Min 6 characters
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Languages Known</mat-label>
+      <mat-select formControlName="languages_known" multiple>
+        <mat-option *ngFor="let lang of languagesList$ | async" [value]="lang">
+          {{ lang }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="createForm.get('languages_known')?.hasError('required')">
+        Required
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Submit button spans both columns in the last row -->
+    <div class="buttons">
+      <button mat-raised-button color="primary" type="submit">
+        Create Mentor
+      </button>
+    </div>
+  </form>
+
+  <ng-container *ngIf="mentors$ | async as mentors">
+    <table mat-table [dataSource]="mentors || []" class="mat-elevation-z8">
+
+      <!-- First Name -->
+      <ng-container matColumnDef="first_name">
+        <th mat-header-cell *matHeaderCellDef>First Name</th>
+        <td mat-cell *matCellDef="let m">{{ m.first_name }}</td>
+      </ng-container>
+
+      <!-- Last Name -->
+      <ng-container matColumnDef="last_name">
+        <th mat-header-cell *matHeaderCellDef>Last Name</th>
+        <td mat-cell *matCellDef="let m">{{ m.last_name }}</td>
+      </ng-container>
+
+      <!-- Email -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let m">{{ m.email }}</td>
+      </ng-container>
+
+      <!-- Languages Known -->
+      <ng-container matColumnDef="languages_known">
+        <th mat-header-cell *matHeaderCellDef>Speaks</th>
+        <td mat-cell *matCellDef="let m">{{ m.languages_known.join(', ') }}</td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let m">
+          <button
+            mat-button
+            color="warn"
+            (click)="deleteMentor(m._id)"
+          >
+            Delete
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row        *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </ng-container>
+</div>

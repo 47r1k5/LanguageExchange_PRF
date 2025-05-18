@@ -1,0 +1,50 @@
+<app-navbar></app-navbar>
+
+<div class="language-management-container">
+  <h2>Language Management</h2>
+
+  <!-- Add‐Language Form -->
+  <form [formGroup]="createForm" (ngSubmit)="onCreate()" class="create-form">
+    <mat-form-field appearance="fill">
+      <mat-label>New Language</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        placeholder="Language name" />
+      <mat-error *ngIf="createForm.get('name')?.hasError('required')">
+        Name is required
+      </mat-error>
+    </mat-form-field>
+    <button mat-raised-button color="primary" type="submit">
+      Add
+    </button>
+  </form>
+
+  <!-- Languages Table -->
+  <ng-container *ngIf="languages$ | async as langs">
+    <table mat-table [dataSource]="langs" class="mat-elevation-z8">
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let name">{{ name }}</td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let name">
+          <button mat-button color="warn" (click)="deleteLanguage(name)">
+            Delete
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row        *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <!-- No languages fallback -->
+    <p *ngIf="langs.length === 0">No languages found.</p>
+  </ng-container>
+</div>
