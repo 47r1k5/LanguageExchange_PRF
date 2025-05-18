@@ -10,23 +10,23 @@ export interface IUser extends Document {
     email: string;
     password: string;
     languages_known?: string[];
-    language_learning?: string;
+    languages_learning?: string[];
     bio?: string;
-    classes?: string[];
+    classes?: mongoose.Types.ObjectId[];
     role:ERole;
     createdAt: Date;
     comparePassword: (candidatePassword: string, callback: (error: Error | null, isMatch: boolean) => void) => void;
 }
 
 const UserSchema: Schema<IUser> = new mongoose.Schema({
-    first_name: { type: String, required: false },
-    last_name: { type: String, required: false },
+    first_name: { type: String, required: true },
+    last_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    languages_known: { type: [String], required: false },
-    language_learning: { type: String, required: false},
+    languages_known: { type: [String], required: true },
+    languages_learning: { type: [String], required: true},
     bio: { type: String, required: false },
-    classes: { type: [String], ref: 'Class', required: false },
+    classes: { type: [mongoose.Types.ObjectId], ref: 'Class', required: false },
     role: { type: String, enum: Object.values(ERole), default: ERole.USER },
     createdAt: { type: Date, required: false},
 });
@@ -49,8 +49,8 @@ UserSchema.pre<IUser>('save', function(next) {
         });
     });
 
-    if(user.languages_known!= undefined && user.language_learning) {
-        if(user.languages_known.includes(user.language_learning)) {
+    if(user.languages_known!= undefined && user.languages_learning!= undefined ) {
+        if (user.languages_learning.some(language => user.languages_known!.includes(language))) {
             return next(new Error("You cannot learn a language you already know."));
         }
     }

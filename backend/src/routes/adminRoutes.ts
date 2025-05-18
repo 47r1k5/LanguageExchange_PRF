@@ -2,12 +2,12 @@ import { Router, Request, Response } from "express";
 import { PassportStatic } from "passport";
 import { User, IUser } from "../model/User";
 import { ERole } from "../enums/ERole";
-import { Pair } from "../model/Pair";
 import { Log } from "../model/Log";
 import { ELogType } from "../enums/ELogType";
 import { logger } from "../middleware/logger";
 import { isAdmin, isMentor } from "../middleware/autorization";
 import { Class } from "../model/Class";
+import { Language } from "../model/Languages";
 
 export const configureAdminRoutes = (
   passport: PassportStatic,
@@ -94,31 +94,6 @@ export const configureAdminRoutes = (
     }
   );
 
-  router.get(
-    "/getAllPairs",
-    isAdmin,
-    isMentor,
-    (req: Request, res: Response) => {
-      const user = req.user as IUser;
-      Pair.find()
-        .then((pairs) => {
-          if (!pairs) {
-            res.status(404).send("No pairs found.");
-          } else {
-            logger(ELogType.INFO, `Admin ${user.email} requested all pairs.`);
-            res.status(200).send(pairs);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          logger(
-            ELogType.ERROR,
-            `Error getting all pairs by ${user.email}: ${error}`
-          );
-        });
-    }
-  );
-
   router.post("/deleteUser", isAdmin, (req: Request, res: Response) => {
     const user = req.user as IUser;
     const userId = req.body.userId;
@@ -131,22 +106,7 @@ export const configureAdminRoutes = (
           );
           res.status(404).send("User not found.");
         } else {
-          Pair.findOneAndDelete({
-            $or: [{ userA: userId }, { userB: userId }],
-          }).then((deletedPair) => {
-            if (deletedPair) {
-              logger(
-                ELogType.INFO,
-                `Admin ${user.email} deleted ${userId} user and ${deletedPair._id} pair.`
-              );
-            } else {
-              logger(
-                ELogType.INFO,
-                `Admin ${user.email} deleted user ${userId} without any pairs.`
-              );
-            }
             res.status(200).send("User deleted successfully.");
-          });
         }
       })
       .catch((error) => {
@@ -157,69 +117,6 @@ export const configureAdminRoutes = (
         res.status(500).send(error);
       });
   });
-
-  router.post(
-    "/createPair",
-    isAdmin,
-    isMentor,
-    (req: Request, res: Response) => {
-      const user = req.user as IUser;
-
-      const { userA, userB, languageA, languageB } = req.body;
-
-      try {
-        const pair = new Pair({ userA, userB, languageA, languageB });
-        const savedPair = pair.save();
-
-        logger(
-          ELogType.INFO,
-          `Admin ${user.email} created a pair between ${userA} and ${userB} (${languageA} ⇄ ${languageB}).`
-        );
-        res.status(200).send(savedPair);
-      } catch (error) {
-        console.error(error);
-        logger(
-          ELogType.ERROR,
-          `Error creating pair by ${user.email}: ${error}`
-        );
-        res.status(500).send("Internal server error.");
-      }
-    }
-  );
-
-  router.post(
-    "/deletePair",
-    isAdmin,
-    isMentor,
-    (req: Request, res: Response) => {
-      const user = req.user as IUser;
-      const pairId = req.body.pairId;
-      Pair.findByIdAndDelete(pairId)
-        .then((deletedPair) => {
-          if (!deletedPair) {
-            logger(
-              ELogType.WARNING,
-              `Admin ${user.email} attempted to delete non-existing pair ${pairId}.`
-            );
-            res.status(404).send("Pair not found.");
-          } else {
-            logger(
-              ELogType.INFO,
-              `Admin ${user.email} deleted pair ${pairId}.`
-            );
-            res.status(200).send("Pair deleted successfully.");
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          logger(
-            ELogType.ERROR,
-            `Error deleting pair ${pairId} by ${user.email}: ${error}`
-          );
-          res.status(500).send(error);
-        });
-    }
-  );
 
   router.get("/getAllLogs", isAdmin, (req: Request, res: Response) => {
     const user = req.user as IUser;
@@ -263,7 +160,7 @@ export const configureAdminRoutes = (
 
   router.post("/createMentor", isAdmin, (req: Request, res: Response) => {
     const user = req.user as IUser;
-    const { first_name, last_name, email, password, languages_known } =
+    const { first_name, last_name, email, password, languages_known, bio } =
       req.body;
     const mentor = new User({
       first_name,
@@ -271,6 +168,7 @@ export const configureAdminRoutes = (
       email,
       password,
       languages_known,
+      bio,
       role: ERole.MENTOR,
     });
     mentor
@@ -368,6 +266,55 @@ export const configureAdminRoutes = (
         );
         res.status(500).send(error);
       });
+  });
+
+  router.post("/addLanguage", isAdmin, (req: Request, res: Response) => {
+    const user = req.user as IUser;
+    const language = req.body.language as string;
+    let lang = new Language({name:language});
+    lang.save()
+      .then((savedLanguage) => {
+        logger(
+          ELogType.INFO,
+          `Admin ${user.email} created a language ${savedLanguage.name}.`
+        );
+        res.status(200).send(savedLanguage);
+      })
+      .catch((error) => {
+        console.log(error);
+        logger(
+          ELogType.ERROR,
+          `Error creating language by ${user.email}: ${error}`
+        );
+        res.status(500).send("Internal server error.");
+      });
+  });
+
+  router.post("/deleteLanguage", isAdmin, (req: Request, res: Response) => {
+    const user = req.user as IUser;
+    const language = req.body.language as string;
+    Language.deleteOne({name: language})
+      .then((deletedLanguage) => {
+        if (!deletedLanguage) {
+          logger(
+            ELogType.WARNING,
+            `Admin ${user.email} attempted to delete non-existing language ${language}.`
+          );
+          res.status(404).send("Language not found.");
+        } else {
+          logger(
+            ELogType.INFO,
+            `Admin ${user.email} deleted language ${language}.`
+          );
+          res.status(200).send("Language deleted successfully.");
+        }
+      })
+      .catch((error) => {
+        logger(
+          ELogType.ERROR,
+          `Error deleting language ${language} by ${user.email}: ${error}`
+        );
+        res.status(500).send(error);})
   });
 
   router.get("/getClassByTeacherId", isAdmin, (req: Request, res: Response) => {

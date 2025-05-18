@@ -8,6 +8,7 @@ import { configurePassport } from "./middleware/passport";
 import mongoose from "mongoose";
 import {ERole} from "./enums/ERole";
 import { User } from "./model/User";
+import cors from 'cors';
 import { configureAdminRoutes } from "./routes/adminRoutes";
 import { configureMentorRoutes } from "./routes/mentorRoutes";
 
@@ -28,6 +29,8 @@ mongoose
         last_name: "User",
         email: "admin@example.com",
         password: "admin123",
+        languages_known: [],
+        languages_learning: [],
         role: ERole.ADMIN,
       });
 
@@ -46,6 +49,11 @@ mongoose
     console.log(error);
     return;
   });
+
+app.use(cors({
+  origin: 'http://localhost:4200',
+  credentials: true
+}));
 
 // bodyParser
 app.use(bodyParser.urlencoded({ extended: true }));

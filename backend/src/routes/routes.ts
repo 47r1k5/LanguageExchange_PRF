@@ -4,36 +4,66 @@ import { User, IUser } from "../model/User";
 import { Class } from "../model/Class";
 import { logger } from "../middleware/logger";
 import { ELogType } from "../enums/ELogType";
+import { Language } from "../model/Languages";
+import { ERole } from "../enums/ERole";
 
 export const configureRoutes = (
   passport: PassportStatic,
   router: Router
 ): Router => {
   router.get("/", (req: Request, res: Response) => {
-    res.status(200).send("Welcome to the Language Exchange Site!");
+    res.status(200).send("Welcome to the Language Exchange API!");
   });
 
-  router.get("/getMentors", (req: Request, res: Response) => {
-    User.find({ role: "mentor" }).then((mentors) => {
-      if (!mentors) {
-        res.status(404).send("No mentors found.");
-      } else {
-        res.status(200).send(mentors);
-      }
-    });
+  router.get("/checkAuth", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      res.status(200).send(true);
+    } else {
+      res.status(401).send(false);
+    }
   });
 
-  router.get("/getMentorsByLanguage", (req: Request, res: Response) => {
-    User.find({ role: "mentor" })
-      .then((mentors) => {
-        if (!mentors) {
-          res.status(404).send("No mentors found.");
-        } else {
-          let filteredMentors = mentors.filter((mentor) => {
-            return mentor.languages_known?.includes(req.body.language) || false;
-          });
-          res.status(200).send(filteredMentors);
+  router.get("/checkRole", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      const user = req.user as IUser;
+      res.status(200).json(user.role);
+    } else {
+      res.status(401).json({message:"User is not logged in."});
+    }
+  });
+
+  router.get("/languages", (req: Request, res: Response) => {
+    Language.find()
+      .then((languages) => {
+        if (!languages || languages.length === 0) {
+          return res.status(404).json({ message: "No languages found" });
         }
+        let languagesList = languages.map((lang) => lang.name);
+        return res.status(200).json(languagesList);
+      })
+      .catch((error) => {
+        logger(ELogType.ERROR, `Error fetching languages: ${error}`);
+        res.status(500).send("Error fetching languages.");
+      });
+  });
+
+  router.get("/mentors", (req: Request, res: Response) => {
+    const { languages } = req.query;
+    const filter: any = { role: "mentor" };
+
+    if (languages) {
+      const langs = (languages as string)
+        .split(",")
+        .map((l) => l.trim())
+        .filter((l) => l.length);
+      if (langs.length) {
+        filter.languages_known = { $in: langs };
+      }
+    }
+
+    const mentors = User.find(filter)
+      .then((mentors) => {
+        return res.status(200).json(mentors || []);
       })
       .catch((error) => {
         logger(ELogType.ERROR, `Error fetching mentors: ${error}`);
@@ -41,14 +71,111 @@ export const configureRoutes = (
       });
   });
 
-  router.get("/getClasses", (req: Request, res: Response) => {
-    Class.find()
-      .then((classes) => {
-        if (!classes) {
-          res.status(404).send("No classes found.");
-        } else {
-          res.status(200).send(classes);
+  router.get("/mentors/:id", (req: Request, res: Response) => {
+    User.findById(req.params.id)
+      .populate("classes", "name level learn_language free_space")
+      .then((mentor) => {
+        if (!mentor || mentor.role !== "mentor") {
+          return res.status(404).send("Mentor not found.");
         }
+        res.json(mentor);
+      })
+      .catch((error) => {
+        logger(ELogType.ERROR, `Error fetching mentor: ${error}`);
+        res.status(500).send("Error fetching mentor.");
+      });
+  });
+
+  router.get("/class/:id", (req: Request, res: Response) => {
+    Class.findById(req.params.id)
+      .populate("teacherId", "first_name last_name").populate('studentsIds', 'first_name last_name email')
+      .then((classItem) => {
+        if (!classItem) {
+          return res.status(404).send("Class not found.");
+        } else {
+          res.json(classItem);
+        }
+      })
+      .catch((error) => {
+        logger(ELogType.ERROR, `Error fetching class: ${error}`);
+      });
+  });
+
+  router.put("/class/:id/enroll", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      const user = req.user as IUser;
+      const classId = req.params.id;
+
+      Class.findByIdAndUpdate(
+        classId,
+        {
+          $addToSet: { studentsIds: user._id },
+          $inc: { free_space: -1 },
+        },
+        { new: true }
+      )
+        .then((updatedClass) => {
+          if (!updatedClass) {
+            res.status(404).send({message:"Class not found."});
+          } else {
+            res.status(200).send(updatedClass);
+          }
+        })
+        .catch((error) => {
+          logger(ELogType.ERROR, `Error enrolling in class: ${error}`);
+          res.status(500).send({message:`Error enrolling in class: ${error}`});
+        });
+    } else {
+      res.status(401).send("User is not logged in.");
+    }
+  });
+
+  router.put("/class/:id/leave", (req: Request, res: Response) => {
+    if (req.isAuthenticated()) {
+      const user = req.user as IUser;
+      const classId = req.params.id;
+
+      Class.findByIdAndUpdate(
+        classId,
+        {
+          $pull: { studentsIds: user._id },
+          $inc: { free_space: 1 },
+        },
+        { new: true }
+      )
+        .then((updatedClass) => {
+          if (!updatedClass) {
+            res.status(404).send("Class not found.");
+          } else {
+            res.status(200).send(updatedClass);}}).catch((error) => {
+            logger(ELogType.ERROR, `Error leaving class: ${error}`);
+            res.status(500).send("Error leaving class.");
+          });
+        }});
+
+  router.get("/classes", (req: Request, res: Response) => {
+    const { learnLanguage, speakLanguage, level } = req.query;
+    const filter: any = {};
+
+    if (learnLanguage) {
+      const langs = (learnLanguage as string).split(",").map((l) => l.trim());
+      filter.learn_language = { $in: langs };
+    }
+    if (speakLanguage) {
+      const langs = (speakLanguage as string).split(",").map((l) => l.trim());
+      filter.speak_language = { $in: langs };
+    }
+    if (level) {
+      filter.level = level;
+    }
+
+    Class.find(filter)
+      .populate("teacherId", "first_name last_name")
+      .then((classes) => {
+        if (!classes || classes.length === 0) {
+          return res.status(200).json([]);
+        }
+        return res.status(200).json(classes);
       })
       .catch((error) => {
         logger(ELogType.ERROR, `Error fetching classes: ${error}`);
@@ -88,7 +215,7 @@ export const configureRoutes = (
       first_name,
       last_name,
       languages_known,
-      language_learning,
+      languages_learning,
     } = req.body;
     const user = new User({
       email: email,
@@ -96,13 +223,13 @@ export const configureRoutes = (
       first_name: first_name,
       last_name: last_name,
       languages_known: languages_known,
-      language_learning: language_learning,
+      languages_learning: languages_learning,
     });
 
     user
       .save()
-      .then((data) => {
-        res.status(200).send(data);
+      .then(() => {
+        res.status(200).send("User registered successfully.");
       })
       .catch((error) => {
         res.status(500).send(error);
@@ -126,11 +253,11 @@ export const configureRoutes = (
   router.put("/updateProfile", (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
       const user = req.user as IUser;
-      const { first_name, last_name, languages_known, language_learning } =
+      const { first_name, last_name, languages_known, languages_learning } =
         req.body;
       User.findByIdAndUpdate(
         user._id,
-        { first_name, last_name, languages_known, language_learning },
+        { first_name, last_name, languages_known, languages_learning },
         { new: true }
       )
         .then((updatedUser) => {
@@ -175,55 +302,7 @@ export const configureRoutes = (
     }
   });
 
-  router.get("/getClassesByLanguage", (req: Request, res: Response) => {
-    const language = req.body.language;
-    Class.find({ language: language })
-      .then((classes) => {
-        if (!classes) {
-          res.status(404).send("No classes found.");
-        } else {
-          res.status(200).send(classes);
-        }
-      })
-      .catch((error) => {
-        logger(ELogType.ERROR, `Error fetching classes: ${error}`);
-        res.status(500).send("Error fetching classes.");
-      });
-  });
-
-  router.get("/getClassesByLevel", (req: Request, res: Response) => {
-    const level = req.body.level;
-    Class.find({ level: level })
-      .then((classes) => {
-        if (!classes) {
-          res.status(404).send("No classes found.");
-        } else {
-          res.status(200).send(classes);
-        }
-      })
-      .catch((error) => {
-        logger(ELogType.ERROR, `Error fetching classes: ${error}`);
-        res.status(500).send("Error fetching classes.");
-      });
-  });
-
-  router.get("/getClassesByTeacher", (req: Request, res: Response) => {
-    const teacherId = req.body.teacherId;
-    Class.find({ teacherId: teacherId })
-      .then((classes) => {
-        if (!classes) {
-          res.status(404).send("No classes found.");
-        } else {
-          res.status(200).send(classes);
-        }
-      })
-      .catch((error) => {
-        logger(ELogType.ERROR, `Error fetching classes: ${error}`);
-        res.status(500).send("Error fetching classes.");
-      });
-  });
-
-  router.get("/classes", (req: Request, res: Response) => {
+  router.get("/getMyClasses", (req: Request, res: Response) => {
     if (req.isAuthenticated()) {
       const user = req.user as IUser;
       User.findById(user._id).then((user) => {
@@ -249,96 +328,5 @@ export const configureRoutes = (
     }
   });
 
-  router.put("/enrollInClass", (req: Request, res: Response) => {
-    if (req.isAuthenticated()) {
-      const user = req.user as IUser;
-      const classId = req.body.classId;
-      Class.findByIdAndUpdate(
-        classId,
-        {
-          $addToSet: { studentsIds: user._id },
-        },
-        { new: true }
-      )
-        .then((updatedClass) => {
-          if (!updatedClass) {
-            res.status(404).send("Class not found.");
-          } else {
-            User.findByIdAndUpdate(
-              user._id,
-              {
-                $addToSet: { classes: classId },
-              },
-              { new: true }
-            )
-              .then((updatedUser) => {
-                if (!updatedUser) {
-                  res.status(404).send("User not found.");
-                } else {
-                  res.status(200).send(updatedUser);
-                }
-              })
-              .catch((error) => {
-                logger(ELogType.ERROR, `Error updating user: ${error}`);
-                res.status(500).send("Error updating user.");
-              });
-            res.status(200).send(updatedClass);
-          }
-        })
-        .catch((error) => {
-          logger(ELogType.ERROR, `Error enrolling in class: ${error}`);
-          res.status(500).send("Error enrolling in class.");
-        });
-    } else {
-      res.status(401).send("User is not logged in.");
-    }
-  });
-
-  router.put("/leaveClass", (req: Request, res: Response) => {
-    if (req.isAuthenticated()) {
-      const user = req.user as IUser;
-      const classId = req.body.classId;
-      Class.findByIdAndUpdate(
-        classId,
-        {
-          $pull: { studentsIds: user._id },
-        },
-        { new: true }
-      )
-        .then((updatedClass) => {
-          if (!updatedClass) {
-            res.status(404).send("Class not found.");
-          } else {
-            User.findByIdAndUpdate(
-              user._id,
-              {
-                $pull: { classes: classId },
-              },
-              { new: true }
-            )
-              .then((updatedUser) => {
-                if (!updatedUser) {
-                  res.status(404).send("User not found.");
-                } else {
-                  res.status(200).send(updatedUser);
-                }
-              })
-              .catch((error) => {
-                logger(ELogType.ERROR, `Error updating user: ${error}`);
-                res.status(500).send("Error updating user.");
-              });
-            res.status(200).send(updatedClass);
-          }
-        })
-        .catch((error) => {
-          logger(ELogType.ERROR, `Error leaving class: ${error}`);
-          res.status(500).send("Error leaving class.");
-        });
-    }
-    else {
-      res.status(401).send("User is not logged in.");
-    }
-  }
-  );
   return router;
 };
